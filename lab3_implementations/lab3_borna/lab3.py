@@ -31,7 +31,7 @@ class MarkovChain:
         return
     
     # Simulates a random walk of the specified Markov chain
-    # Stores the durations of the wal in a dictionary and returns it
+    # Stores the durations of the walk in a dictionary and returns it
     def simulateRandomWalk(self, steps) -> dict:
         startingState = random.randint(0, 2)
         previousState = startingState
@@ -66,7 +66,9 @@ states = {0 : "Social media",
 lambdas = np.array([1/53, 1/14, 1/87.6])      
 
 # Transition matrices between categories
-transitionMatrix = np.array([[0.0, 0.25, 0.75], [0.4, 0.0, 0.6], [0.8, 0.2, 0.0]])
+transitionMatrix = np.array([[0.0, 0.25, 0.75], 
+                             [0.4, 0.0 , 0.6 ], 
+                             [0.8, 0.2 , 0.0 ]])
 
 # Initialize the Markov chain
 mChain = MarkovChain(states, lambdas, transitionMatrix)
@@ -77,7 +79,7 @@ durations = mChain.simulateRandomWalk(100000)
 # Write the durations in three separate csv files, one for each category
 with (open("social_media_readings.csv", "w") as sm_readings,
       open("music_streaming_readings.csv", "w") as ms_readings,
-      open("video_streeaming_readings.csv", "w") as vs_readings):
+      open("video_streaming_readings.csv", "w") as vs_readings):
     
     sm_readings.write("Duration\n")
     for duration in durations[0]:
