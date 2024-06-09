@@ -4,24 +4,24 @@ import random
 import math
 import scipy
 import time
-import scapy.all as scapy
+import scapy.all
 
 # macros
-NUM_OF_SIMULATION_STEPS = 50
+NUM_OF_SIMULATION_STEPS = 20
 PRINT_PACKET_SIZE = True
 PRINT_STATE_STATS = True
 PRINT_SIMULATION_STATS = True
 
 # general packet settings, same for each one
-icmp = scapy.ICMP()
+icmp = scapy.all.ICMP()
 icmp.type = 8
 icmp.code = 0
-ip = scapy.IP()
+ip = scapy.all.IP()
 ip.src = '10.7.229.229'
 ip.dst = '4.2.2.2' # random internet server for pinging, doesn't respond to multiple back-to-back requests
-#ip.show()
-#icmp.show()
-#response = scapy.sr(ip / icmp / icmp_payload)
+
+# set verbosity to almost mute
+scapy.config.Conf.verb = 0
 
 class MarkovChain:
     def __init__(self, states, lambdas, transitionProbabilityMatrix) -> None:
@@ -75,7 +75,7 @@ class MarkovChain:
                 elif (currentState == 1):
                     # social networks
                     # the best distribution for packet size: halfgennorm(beta = 0.19, loc = 54.00, scale = 0.00)
-                    packetSize = scipy.stats.halfgennorm.rvs(beta=0.19, loc=54.00, scale=0.00, size=1)
+                    packetSize = scipy.stats.halfgennorm.rvs(beta=0.19, loc=54.00, scale=0.0001, size=1)
                     while (packetSize[0] < 42):
                         packetSize = scipy.stats.halfgennorm.rvs(beta=0.19, loc=54.00, scale=0.00, size=1)
                     # the best distribution for inter-arrival times: kappa3(a = 2.11, loc = -0.0, scale = 0.02)
@@ -97,14 +97,12 @@ class MarkovChain:
                 for i in range(int(packetSize[0]) - 42):
                     packetPayload += "a"
 
-                # sending the packet
-                # TODO: maybe try a different receiver, 4.2.2.2 won't answer to such high packet density per second
-                #       - maybe use sending method without response (look through scapy documentation)
-                #response = scapy.sr(ip / icmp / packetPayload)
+                # sending the packet, we don't care about the response
+                scapy.all.send(ip / icmp / packetPayload)
 
                 # simulate inter-arrival time by sleeping
                 # TODO: uncomment the next line when done with debugging
-                #time.sleep(interArrivalTime[0])
+                time.sleep(interArrivalTime[0])
 
                 # state stats 
                 totalTimeSpent += interArrivalTime[0]
