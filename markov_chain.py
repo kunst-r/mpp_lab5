@@ -7,8 +7,8 @@ import time
 import scapy.all
 
 # macros
-NUM_OF_SIMULATION_STEPS = 20
-PRINT_PACKET_SIZE = True
+NUM_OF_SIMULATION_STEPS = 100
+PRINT_PACKET_SIZE = False
 PRINT_STATE_STATS = True
 PRINT_SIMULATION_STATS = True
 
@@ -48,11 +48,13 @@ class MarkovChain:
 
             # change state and generate duration of stay in that state
             currentState = np.random.choice([0, 1, 2], p=transitionProbabilityMatrix[previousState])
-            currentStateDuration = math.ceil(random.expovariate(self.lambdas[currentState]))
-            self.durations[currentState].append(currentStateDuration)
+            currentStateDuration = random.expovariate(self.lambdas[currentState])
             previousState = currentState
+
+            # probability matrix which will be used to calculate theoretical stationary probabilites
+            tempMat = self.transitionProbabilityMatrix
             
-            # current state stats for debugging purpose
+            # current state stats for debugging purposes
             totalTimeSpent = 0
             totalPacketSentForThisState = 0 # not necessary
             
@@ -101,7 +103,6 @@ class MarkovChain:
                 scapy.all.send(ip / icmp / packetPayload)
 
                 # simulate inter-arrival time by sleeping
-                # TODO: uncomment the next line when done with debugging
                 time.sleep(interArrivalTime[0])
 
                 # state stats 
@@ -111,15 +112,37 @@ class MarkovChain:
             if (PRINT_STATE_STATS):
                 print("totalPacketSentForThisState =", totalPacketSentForThisState)
 
+            # save the actual time spent in this state (instead of currentStateDuration which is the theoretical representation)
+            self.durations[currentState].append(totalTimeSpent)
+
+            # calculating the theoretical stationary probabilites
+            tempMat = np.matmul(tempMat, self.transitionProbabilityMatrix)
+
             # simulation stats 
             totalSimulationTime += totalTimeSpent
             totalSimulationPacketCount += totalPacketSentForThisState
             
-            
         if (PRINT_SIMULATION_STATS):        
-            print("\ntotalSimulationTime =", totalSimulationTime)
+            print("\ntotalSimulationTime =", totalSimulationTime) 
             print("totalSimulationPacketCount =", totalSimulationPacketCount)
         
+        # since 100 steps is relatively low, we will take the average of each state as final stationary probability
+        stationaryProbabilityVector = []
+        for i in range(len(states)):
+            tmpSum = 0
+            for j in range(len(states)):
+                tmpSum += tempMat[j][i]
+            stationaryProbabilityVector.append(tmpSum / len(states))
+        # additionally make sure that vector sum is equal to 1
+        checkFactor = 1 / sum(stationaryProbabilityVector)
+        for p in stationaryProbabilityVector:
+            p *= checkFactor
+
+        print("\nStationary probability matrixX")
+        print(tempMat)
+        print("Stationary probability vector:")
+        print(stationaryProbabilityVector)
+
         return self.durations
     
 ##### MAIN ####
@@ -162,3 +185,12 @@ with open('lab3.csv', "w") as outFile:
             row += "/\n"
         
         outFile.write(row)
+
+totalDuration = sum(durations[0]) + sum(durations[1]) + sum(durations[2])
+empiricalStationaryProbabilityVector = []
+for i in range(len(durations)):
+    empiricalStationaryProbabilityVector.append(sum(durations[i])/totalDuration)
+# Calculate probabilities of occurrence for every category using its total time in simulation
+print("\nProbability of user being in a specific state:")
+print("online video games\tsocial networks\tvideo streaming")
+print(empiricalStationaryProbabilityVector)
