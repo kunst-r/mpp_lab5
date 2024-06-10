@@ -19,6 +19,7 @@ icmp.code = 0
 ip = scapy.all.IP()
 ip.src = '10.7.229.229'
 ip.dst = '4.2.2.2' # random internet server for pinging, doesn't respond to multiple back-to-back requests
+#ip.dst = '10.7.229.229'
 
 # set verbosity to almost mute
 scapy.config.Conf.verb = 0
@@ -70,33 +71,41 @@ class MarkovChain:
                     # online video games
                     # the best distribution for packet size: dweibull(c = 0.51, loc = 115.0, scale = 41.26)
                     packetSize = scipy.stats.dweibull.rvs(c=0.51, loc=115.0, scale=41.26, size=1)
-                    while (packetSize[0] < 42):
+                    while (packetSize[0] < 44):
                         packetSize = scipy.stats.dweibull.rvs(c=0.51, loc=115.0, scale=41.26, size=1)
                     # the best distribution for inter-arrival times: pareto(b = 11.52, loc = -0.09, scale = 0.09)
                     interArrivalTime = scipy.stats.pareto.rvs(b=11.52, loc=-0.09, scale=0.09, size=1)
+                    while (interArrivalTime[0] < 0):
+                        interArrivalTime = scipy.stats.pareto.rvs(b=11.52, loc=-0.09, scale=0.09, size=1)
+                    packetPayload = "VG"
                 elif (currentState == 1):
                     # social networks
                     # the best distribution for packet size: halfgennorm(beta = 0.19, loc = 54.00, scale = 0.00)
                     packetSize = scipy.stats.halfgennorm.rvs(beta=0.19, loc=54.00, scale=0.0001, size=1)
-                    while (packetSize[0] < 42):
+                    while (packetSize[0] < 44):
                         packetSize = scipy.stats.halfgennorm.rvs(beta=0.19, loc=54.00, scale=0.00, size=1)
                     # the best distribution for inter-arrival times: kappa3(a = 2.11, loc = -0.0, scale = 0.02)
                     interArrivalTime = scipy.stats.kappa3.rvs(a=2.11, loc=-0.0, scale=0.02, size=1)
+                    while (interArrivalTime[0] < 0):
+                        interArrivalTime = scipy.stats.kappa3.rvs(a=2.11, loc=-0.0, scale=0.02, size=1)
+                    packetPayload = "SN"
                 elif (currentState == 2):
                     # video streaming
                     # the best distribution for packet size: foldcauchy(c = 118.91, loc = 0.2, scale = 10.86)
                     packetSize = scipy.stats.foldcauchy.rvs(c=118.91, loc=0.2, scale=10.86, size=1)
-                    while (packetSize[0] < 42):
+                    while (packetSize[0] < 44):
                         packetSize = scipy.stats.foldcauchy.rvs(c=118.91, loc=0.2, scale=10.86, size=1)
                     # the best distribution for inter-arrival times: genhalflogistic(c = 0.0, loc = -0.04, scale = 7.0)
                     interArrivalTime = scipy.stats.genhalflogistic.rvs(c=0.0000000000001, loc=-0.04, scale=7, size=1)
+                    while (interArrivalTime[0] < 0):
+                        interArrivalTime = scipy.stats.genhalflogistic.rvs(c=0.0000000000001, loc=-0.04, scale=7, size=1)
+                    packetPayload = "VS"
 
                 if (PRINT_PACKET_SIZE):
                     print("packetSize =", int(packetSize[0]))
 
                 # simulating the payload (each letter in payload is 1 B, empty echo request is 42 B)
-                packetPayload = ""
-                for i in range(int(packetSize[0]) - 42):
+                for i in range(int(packetSize[0]) - 44):
                     packetPayload += "a"
 
                 # sending the packet, we don't care about the response
@@ -126,6 +135,9 @@ class MarkovChain:
             print("\ntotalSimulationTime =", totalSimulationTime) 
             print("totalSimulationPacketCount =", totalSimulationPacketCount)
         
+
+        #print("\nStationary probability matrix")
+        #print(tempMat)
         # since 100 steps is relatively low, we will take the average of each state as final stationary probability
         stationaryProbabilityVector = []
         for i in range(len(states)):
@@ -138,9 +150,7 @@ class MarkovChain:
         for p in stationaryProbabilityVector:
             p *= checkFactor
 
-        print("\nStationary probability matrixX")
-        print(tempMat)
-        print("Stationary probability vector:")
+        print("Theoretical stationary probability vector:")
         print(stationaryProbabilityVector)
 
         return self.durations
@@ -165,7 +175,7 @@ mChain = MarkovChain(states, lambdas, transitionProbabilityMatrix)
 durations = mChain.simulateRandomWalk(NUM_OF_SIMULATION_STEPS)
 
 # Write the durations in a csv file
-with open('lab3.csv', "w") as outFile:
+with open('lab5.csv', "w") as outFile:
     outFile.write("online_video_games,social_networks,video_streaming\n")
     for i in range(NUM_OF_SIMULATION_STEPS):
         row = ""
@@ -191,6 +201,5 @@ empiricalStationaryProbabilityVector = []
 for i in range(len(durations)):
     empiricalStationaryProbabilityVector.append(sum(durations[i])/totalDuration)
 # Calculate probabilities of occurrence for every category using its total time in simulation
-print("\nProbability of user being in a specific state:")
-print("online video games\tsocial networks\tvideo streaming")
+print("\nEmpirical stationary probability vector:")
 print(empiricalStationaryProbabilityVector)
