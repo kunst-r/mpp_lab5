@@ -40,6 +40,10 @@ class MarkovChain:
         startingState = random.randint(0, 2)
         previousState = startingState
 
+        # open file to save
+        f = open("generated_data.csv", "w")
+        f.write("currentState,packetSize,interArrivalTime\n")
+
         # simulation stats for debugging purposes
         totalSimulationTime = 0
         totalSimulationPacketCount = 0
@@ -101,6 +105,8 @@ class MarkovChain:
                         interArrivalTime = scipy.stats.genhalflogistic.rvs(c=0.0000000000001, loc=-0.04, scale=7, size=1)
                     packetPayload = "VS"
 
+                f.write(str(self.states[currentState]) + "," + str(packetSize) + "," + str(interArrivalTime) + "\n")
+
                 if (PRINT_PACKET_SIZE):
                     print("packetSize =", int(packetSize[0]))
 
@@ -152,6 +158,9 @@ class MarkovChain:
 
         print("Theoretical stationary probability vector:")
         print(stationaryProbabilityVector)
+
+        # close file before returning
+        f.close()
 
         return self.durations
     
