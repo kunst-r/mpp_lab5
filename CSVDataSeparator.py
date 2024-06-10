@@ -9,7 +9,7 @@ def separateCSVData(csvInputPath: str, csvOutputPaths: list[str]):
         with (open(csvInputPath) as csvInput,
               open(fileName, "w") as csvOutput):
             
-            csvOutput.write("packetSize, interArrivalTime\n")
+            csvOutput.write("packetSize,interArrivalTime\n")
             csvReader = csv.reader(csvInput, delimiter='\n')
 
             categoryName = fileName[:-4].replace("_", " ")
